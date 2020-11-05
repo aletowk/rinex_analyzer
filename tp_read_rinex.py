@@ -14,10 +14,15 @@ def get_timestamp_array(obs):
 
 def compare_signals_loop(obs,t_array,obs_types,prn_list):
     flag = True
-    
+    print("*** [COMPARE SIGNALS] ***\n")
+    print("This function will allow you to choose one PRN and 2 signals to compare")
+    print("When it is done, it will plot those signals on the same graph")
+    print("After that, by closing the graph window, some statistics will be prompted in your terminal")
+    print("So, you will be asked if you want to do it once again on may be another PRN and others signals\n")
+
     while(flag):
         # Choose one PRN on which you want to compare to signals:
-        print("Choose the PRN from which you wxant to compare 2 signals: ")
+        print("\nChoose the PRN from which you wxant to compare 2 signals: ")
         prn = utils.choose_string_in_list(prn_list)
         print("=> Choose signal 1 to compare")
         sig1 = utils.choose_string_in_list(obs_types)
@@ -32,6 +37,7 @@ def compare_signals_loop(obs,t_array,obs_types,prn_list):
                     ncol=2, mode="expand", borderaxespad=0.)
         plt.show()
 
+        print("\nHere are stats about those signals:\n")
         make_some_stats(sig1,sig1_array)
         make_some_stats(sig2,sig2_array)
 
@@ -42,8 +48,8 @@ def compare_signals_loop(obs,t_array,obs_types,prn_list):
             flag = False
 
 def make_some_stats(sig_str,obs):
-    print("The mean of ",sig_str," is: ",ST.mean(obs))
-    print("The std of ",sig_str," is: ",ST.stdev(obs))
+    print("\tThe mean of ",sig_str," is: ",ST.mean(obs))
+    print("\tThe std of ",sig_str," is: ",ST.stdev(obs))
 
 def main(filename):  
     print(TP.get_intro_str())
