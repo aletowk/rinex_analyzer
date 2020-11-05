@@ -1,79 +1,54 @@
 from argparse import ArgumentParser
-from matplotlib.pyplot import show, figure
+import matplotlib.pyplot as plt
 import georinex as gr
 import utils
+import tptext as TP
 
+def get_timestamp_array(obs):
+    tmp = obs.time.to_dict()['data']
+    for i in range(0,len(tmp)):
+        tmp[i] = tmp[i].timestamp()
+    return tmp
 
-""" Here are examples on how to use it:
+def compare_signals_loop(obs,t_array,obs_types,prn_list):
+    flag = True
+    
+    while(flag):
+        # Choose one PRN on which you want to compare to signals:
+        print("Choose the PRN from which you wxant to compare 2 signals: ")
+        prn = utils.choose_string_in_list(prn_list)
+        print("=> Choose signal 1 to compare")
+        sig1 = utils.choose_string_in_list(obs_types)
+        print("=> Choose signal 2 to compare")
+        sig2 = utils.choose_string_in_list(obs_types)
 
-# This reads observations and store all in an xarray.Dataset
-obs = gr.load('MyRINEXFILE.XXx')
+        plt.plot(t_array,obs[sig1].sel(sv=prn).to_dict()["data"],label=sig1)
+        plt.plot(t_array,obs[sig2].sel(sv=prn).to_dict()["data"],label=sig2)
+        plt.legend( bbox_to_anchor=(0., 1.02, 1., .102), loc='lower left',
+                    ncol=2, mode="expand", borderaxespad=0.)
+        plt.show()
 
-# Get time as an
-obs.time
-
-# Plot observables for one satellite in view (sv):
-obs['C1C'].sel(sv=['G20']).dropna(dim='time',how='all').plot()
-obs['C1C'].sel(sv=['G26']).dropna(dim='time',how='all').plot() # Add G27 measure
-obs['C1C'].sel(sv=['G27']).dropna(dim='time',how='all').plot() # Add G26 measure
-show() # Show all asked measures
-
-"""
-
-def choose_sat_to_print(sv_list):
-    n = utils.get_integer_in_range(1,len(sv_list),"How Many Sat to print [1,"+str(len(sv_list))+"]: ")
-    prn_list = []
-    for _ in range(n):
-        prn = input("Enter one PRN as in list (G01 or G22): ")
-        if(sv_list.count(prn) != 1):
-            print("Something wrong with your input string: \n",prn,"\nExiting program...")
-            print(sv_list)
-            exit(1)
+        choice = input("Do you want to start again ? (Y/y = yes | other is No): ")
+        if(choice == "Y" or choice == "y"):
+            flag = True
         else:
-            prn_list.append(prn)
-    return prn_list
-
-def choose_observation_to_print():
-    allowed_obs = [
-                   'C1C','L1C','D1C','S1C', # L1
-                   'C2W','L2W','D2W','S2W', # L2W
-                   'C2S','L2S','D2S','S2S'  # L2C
-                  ]
-    print("Allowed obs type :\n",allowed_obs)
-    n = utils.get_integer_in_range(1,3,"How Many Obs type to print (1 to 3): ")
-    obs_to_print = []
-    for _ in range(n):
-        obs = input("Enter one obs as proposed above: ")
-        if(allowed_obs.count(obs) != 1):
-            print("Something wrong with your input string: \n",obs,"\nNot in :")
-            print(allowed_obs)
-            print("Exiting program...")
-            exit(1)
-        else:
-            obs_to_print.append(obs)
-    return obs_to_print
-
-def print_obs_list(obs,str_obs_list,prn_list):
-    for obs_type in str_obs_list:
-        for prn in prn_list:
-            obs[obs_type].sel(sv=[prn]).dropna(dim='time',how='all').plot()
-        show()
-
+            flag = False
+        
 def main(filename):  
+    print(TP.get_intro_str())
     all_data = gr.load(filename)
-    print("Following, the list of PRN availables:")
-    sv_array = all_data.sv.values.tolist()
     
-    str_to_print = ""
-    for gps in sv_array:
-        str_to_print += "|" + gps + "|"
-    print(str_to_print)
-    
-    prn_list_to_print = choose_sat_to_print(sv_array)
+    # get time array and transform it to timestamp
+    time_array = get_timestamp_array(all_data)
+    # Extract all availables observables except 'time' and 'sv'
+    obs_type_list = []
+    for var in all_data.variables:
+        if(var != 'time' and var != 'sv'):
+            obs_type_list.append(var)
+    # get list of available PRN in this file
+    prn_list = all_data.sv.to_dict()["data"]
 
-    obs_list_to_print = choose_observation_to_print()
-
-    print_obs_list(all_data,obs_list_to_print,prn_list_to_print)
+    compare_signals_loop(all_data,time_array,obs_type_list,prn_list)
 
 
 def build_args():
