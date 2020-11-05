@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import georinex as gr
 import utils
 import tptext as TP
+import statistics as ST
+
 
 def get_timestamp_array(obs):
     tmp = obs.time.to_dict()['data']
@@ -22,18 +24,27 @@ def compare_signals_loop(obs,t_array,obs_types,prn_list):
         print("=> Choose signal 2 to compare")
         sig2 = utils.choose_string_in_list(obs_types)
 
-        plt.plot(t_array,obs[sig1].sel(sv=prn).to_dict()["data"],label=sig1)
-        plt.plot(t_array,obs[sig2].sel(sv=prn).to_dict()["data"],label=sig2)
+        sig1_array = obs[sig1].sel(sv=prn).to_dict()["data"]
+        sig2_array = obs[sig2].sel(sv=prn).to_dict()["data"]
+        plt.plot(t_array,sig1_array,label=sig1)
+        plt.plot(t_array,sig2_array,label=sig2)
         plt.legend( bbox_to_anchor=(0., 1.02, 1., .102), loc='lower left',
                     ncol=2, mode="expand", borderaxespad=0.)
         plt.show()
+
+        make_some_stats(sig1,sig1_array)
+        make_some_stats(sig2,sig2_array)
 
         choice = input("Do you want to start again ? (Y/y = yes | other is No): ")
         if(choice == "Y" or choice == "y"):
             flag = True
         else:
             flag = False
-        
+
+def make_some_stats(sig_str,obs):
+    print("The mean of ",sig_str," is: ",ST.mean(obs))
+    print("The std of ",sig_str," is: ",ST.stdev(obs))
+
 def main(filename):  
     print(TP.get_intro_str())
     all_data = gr.load(filename)
